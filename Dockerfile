@@ -18,14 +18,18 @@ ENV GO111MODULE="on" \
 ###############################
 # DOCKER UPGRADE STAGE
 ###############################
-RUN go mod tidy \
-  && go mod download \
-  && go build -o main .
 RUN apt-get autoremove \
   && apt-get autoclean \
   && apt-get update \
   && apt-get upgrade -y \
   && apt-get install build-essential -y
+
+###############################
+# DOCKER INSTALL & BUILD STAGE
+###############################
+RUN go mod tidy \
+  && go mod download \
+  && go build -o main .
 
 ###############################
 # DOCKER FINAL STAGE
