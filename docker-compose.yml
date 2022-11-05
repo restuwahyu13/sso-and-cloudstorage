@@ -1,10 +1,41 @@
 version: "3"
 services:
   #=================================
+  # APP SERVICES ENVIRONMENT
+  #=================================
+  app:
+    build: .
+    restart: always
+    healthcheck:
+      test: env | grep HOME
+      retries: 5
+      start_period: 60s
+      interval: 30s
+      timeout: 120s
+    env_file:
+      - .env
+    ports:
+      - 3000:3000
+    depends_on:
+      - database
+      - auth
+      - storage
+    volumes:
+      - /usr/src/goapp
+    networks:
+      - go_networks
+  #=================================
   # AUTH SERVICES ENVIRONMENT
   #=================================
   auth:
     image: jboss/keycloak:latest
+    restart: always
+    healthcheck:
+      test: env | grep HOME
+      retries: 5
+      start_period: 60s
+      interval: 30s
+      timeout: 120s
     env_file:
       - .env
     environment:
@@ -25,6 +56,13 @@ services:
   #=================================
   database:
     image: postgres:14-alpine
+    restart: always
+    healthcheck:
+      test: env | grep HOME
+      retries: 5
+      start_period: 60s
+      interval: 30s
+      timeout: 120s
     env_file:
       - .env
     environment:
@@ -43,6 +81,13 @@ services:
   storage:
     image: minio/minio:latest
     command: minio server /var/lib/minio/data --console-address ":9001"
+    restart: always
+    healthcheck:
+      test: env | grep HOME
+      retries: 5
+      start_period: 60s
+      interval: 30s
+      timeout: 120s
     env_file:
       - .env
     environment:

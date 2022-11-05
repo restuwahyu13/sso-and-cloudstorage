@@ -24,6 +24,7 @@ func main() {
 	})
 
 	err := http.ListenAndServe(":3000", router)
+
 	if err != nil {
 		log.Fatalf("Server listening error %v", err)
 	} else {
