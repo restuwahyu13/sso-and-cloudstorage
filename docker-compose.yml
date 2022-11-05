@@ -56,13 +56,13 @@ services:
     networks:
       - go_networks
   #=================================
-  # VOLUME PERSISTENT DATA
+  # VOLUMES PERSISTENT DATA
   #=================================
 volumes:
   database:
   storage:
     #=================================
-    # NETWORK SHARING GROUP
+    # NETWORKS SHARING GROUP
     #=================================
 networks:
   go_networks:
