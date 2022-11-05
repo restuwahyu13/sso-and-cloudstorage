@@ -1,0 +1,69 @@
+version: "3"
+services:
+  #=================================
+  # AUTH SERVICES ENVIRONMENT
+  #=================================
+  auth:
+    image: jboss/keycloak:latest
+    env_file:
+      - .env
+    environment:
+      - KEYCLOAK_USER=${KC_USER}
+      - KEYCLOAK_PASSWORD=${KC_PASSWORD}
+      - KC_DB=${KC_DB}
+      - KC_DB_URL=${KC_DB_HOST}
+      - KC_DB_USERNAME=${KC_DB_USER}
+      - KC_DB_PASSWORD=${KC_DB_PASSWORD}
+    ports:
+      - 8080:8080
+      - 9990:9990
+    depends_on:
+      - database
+    networks:
+      - go_networks
+  #=================================
+  # DATABASE SERVICES ENVIRONMENT
+  #=================================
+  database:
+    image: postgres:14-alpine
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DB=${PG_DB}
+      - POSTGRES_USER=${PG_USER}
+      - POSTGRES_PASSWORD=${PG_PASSWORD}
+    ports:
+      - 5432:5432
+    volumes:
+      - database:/var/lib/postgres/data
+    networks:
+      - go_networks
+  #=================================
+  # STORAGE SERVICES ENVIRONMENT
+  #=================================
+  storage:
+    image: minio/minio:latest
+    command: minio server /var/lib/minio/data --console-address ":9001"
+    env_file:
+      - .env
+    environment:
+      - MINIO_ROOT_USER=${MINIO_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_PASSWORD}
+    ports:
+      - 9000:9000
+      - 9001:9001
+    volumes:
+      - storage:/var/lib/minio/data
+    networks:
+      - go_networks
+  #=================================
+  # VOLUME PERSISTENT DATA
+  #=================================
+volumes:
+  database:
+  storage:
+    #=================================
+    # NETWORK SHARING GROUP
+    #=================================
+networks:
+  go_networks:
