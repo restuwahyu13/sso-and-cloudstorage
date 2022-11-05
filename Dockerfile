@@ -1,7 +1,7 @@
 ###############################
 # DOCKER START STAGE
 ###############################
-FROM golang:1.19.3-buster as start
+FROM golang:1.19.3-buster
 WORKDIR /usr/src/goapp/
 USER ${USER}
 COPY ./go.mod \
