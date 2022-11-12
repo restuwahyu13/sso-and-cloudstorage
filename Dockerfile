@@ -22,7 +22,14 @@ RUN apt-get autoremove \
   && apt-get autoclean \
   && apt-get update \
   && apt-get upgrade -y \
-  && apt-get install build-essential -y
+  && apt-get install curl \
+  build-essential -y
+
+################################
+# DOCKER INSTALL NODEJS STAGE
+################################
+RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
+RUN apt-get install nodejs
 
 ###############################
 # DOCKER INSTALL & BUILD STAGE
@@ -30,9 +37,10 @@ RUN apt-get autoremove \
 RUN go mod tidy \
   && go mod download \
   && go build -o main .
+RUN npm i pm2 -g --verbose --no-audit
 
 ###############################
 # DOCKER FINAL STAGE
 ###############################
 EXPOSE 3000
-CMD ["./main"]
+CMD pm2-runtime pm2.config.js

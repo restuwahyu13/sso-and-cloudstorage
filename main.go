@@ -16,10 +16,13 @@ func main() {
 	router := http.NewServeMux()
 
 	router.HandleFunc("/", func(rw http.ResponseWriter, r *http.Request) {
+		rw.Header().Set("Content-Type", "application/json")
+
 		res := Response{
 			StatCode: http.StatusOK,
 			StatMsg:  "Building sso and cloud storage using keyloack and minio",
 		}
+
 		json.NewEncoder(rw).Encode(&res)
 	})
 
@@ -30,4 +33,5 @@ func main() {
 	} else {
 		log.Print("Server listening on port: 3000")
 	}
+
 }
