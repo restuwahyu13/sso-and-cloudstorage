@@ -66,7 +66,7 @@ func SetupDatabase() *sqlx.DB {
 
 /*
 =======================================
-# GOLANG HTPP SERVER  SETUP
+# GOLANG HTPP SERVER SETUP
 =======================================
 */
 
