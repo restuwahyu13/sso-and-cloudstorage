@@ -9,10 +9,10 @@ import (
 	pkg "github.com/restuwahyu13/sso-and-cloudstorage/packages"
 )
 
-func Connection(driver string) (*sqlx.DB, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Duration(time.Second*60))
+func Connection(driverName string) (*sqlx.DB, error) {
+	ctx, cancel := context.WithTimeout(context.TODO(), time.Duration(time.Second*10))
 	defer cancel()
 
-	res, err := sqlx.ConnectContext(ctx, driver, pkg.GetString("PG_DSN"))
+	res, err := sqlx.ConnectContext(ctx, driverName, pkg.GetString("PG_DSN"))
 	return res, err
 }

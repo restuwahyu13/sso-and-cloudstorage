@@ -93,7 +93,7 @@ func SetupServer() (*chi.Mux, net.Listener) {
 		},
 	}
 
-	nl, err := lc.Listen(context.Background(), "tcp", fmt.Sprintf("app:%s", pkg.GetString("GO_PORT")))
+	nl, err := lc.Listen(context.Background(), "tcp", fmt.Sprintf("127.0.0.1:%s", pkg.GetString("GO_PORT")))
 	if err != nil {
 		logrus.Errorf("Net listen error: %v", err.Error())
 	}
