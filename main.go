@@ -161,7 +161,7 @@ func SetupGraceFullShutDown(rh *chi.Mux, nl net.Listener) {
 	})
 
 	if err := g.Wait(); err != nil {
-		logrus.Errorf("Gorutine blocking error: %v", err.Error())
+		logrus.Errorf("Gorutine deathlock error: %v", err.Error())
 	}
 
 	ch := make(chan os.Signal, 1)
