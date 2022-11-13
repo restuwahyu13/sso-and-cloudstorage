@@ -11,7 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type MinioConfig struct {
+type minioConfig struct {
 	MinioClient     *minio.Client
 	endpoint        string
 	accessKeyId     string
@@ -19,8 +19,8 @@ type MinioConfig struct {
 	secureProtocol  string
 }
 
-func NewMinio() *MinioConfig {
-	config := MinioConfig{}
+func NewMinio() *minioConfig {
+	config := minioConfig{}
 	config.endpoint = GetString("MINIO_ENDPOINT")
 	config.accessKeyId = GetString("MINIO_ACCESS_KEY_ID")
 	config.secretAccessKey = GetString("MINIO_SECRET_ACCESS_KEY")
@@ -33,10 +33,10 @@ func NewMinio() *MinioConfig {
 		TrailingHeaders: true,
 	})
 
-	return &MinioConfig{MinioClient: client}
+	return &minioConfig{MinioClient: client}
 }
 
-func (h *MinioConfig) bucketExists(ctx context.Context, bucketName string) (bool, error) {
+func (h *minioConfig) bucketExists(ctx context.Context, bucketName string) (bool, error) {
 	res, err := h.MinioClient.BucketExists(ctx, bucketName)
 
 	if err != nil {
@@ -48,7 +48,7 @@ func (h *MinioConfig) bucketExists(ctx context.Context, bucketName string) (bool
 }
 
 // MakeBucket creates a new bucket with bucketName with a context to control cancellations and timeouts
-func (h *MinioConfig) MakeBucket(ctx context.Context, bucketName string) (interface{}, error) {
+func (h *minioConfig) MakeBucket(ctx context.Context, bucketName string) (interface{}, error) {
 	checkBucket, err := h.bucketExists(ctx, bucketName)
 
 	if err != nil {
@@ -68,7 +68,7 @@ func (h *MinioConfig) MakeBucket(ctx context.Context, bucketName string) (interf
 }
 
 // ListBuckets list all buckets owned by this authenticated user
-func (h *MinioConfig) ListBucket(ctx context.Context) ([]minio.BucketInfo, error) {
+func (h *minioConfig) ListBucket(ctx context.Context) ([]minio.BucketInfo, error) {
 	res, err := h.MinioClient.ListBuckets(ctx)
 
 	if err != nil {
@@ -80,7 +80,7 @@ func (h *MinioConfig) ListBucket(ctx context.Context) ([]minio.BucketInfo, error
 }
 
 // GetObject wrapper function that accepts a request context
-func (h *MinioConfig) GetObject(ctx context.Context, bucketName, objectName string) (res *minio.Object, err error) {
+func (h *minioConfig) GetObject(ctx context.Context, bucketName, objectName string) (res *minio.Object, err error) {
 	checkBucket, err := h.bucketExists(ctx, bucketName)
 	if err != nil {
 		return res, err
@@ -102,7 +102,7 @@ func (h *MinioConfig) GetObject(ctx context.Context, bucketName, objectName stri
 }
 
 // PutObject creates an object in a bucket.
-func (h *MinioConfig) PutObject(ctx context.Context, bucketName, objectName string, reader io.Reader) (res minio.UploadInfo, err error) {
+func (h *minioConfig) PutObject(ctx context.Context, bucketName, objectName string, reader io.Reader) (res minio.UploadInfo, err error) {
 	checkBucket, err := h.bucketExists(ctx, bucketName)
 	if err != nil {
 		return res, err
@@ -123,7 +123,7 @@ func (h *MinioConfig) PutObject(ctx context.Context, bucketName, objectName stri
 }
 
 // FPutObject - Create an object in a bucket, with contents from file at filePath. Allows request cancellation.
-func (h *MinioConfig) FGetObject(ctx context.Context, bucketName, objectName, filePath string) error {
+func (h *minioConfig) FGetObject(ctx context.Context, bucketName, objectName, filePath string) error {
 	checkBucket, err := h.bucketExists(ctx, bucketName)
 	if err != nil {
 		return err
@@ -141,7 +141,7 @@ func (h *MinioConfig) FGetObject(ctx context.Context, bucketName, objectName, fi
 }
 
 // FPutObject - Create an object in a bucket, with contents from file at filePath. Allows request cancellation.
-func (h *MinioConfig) FPutObject(ctx context.Context, bucketName, objectName, filePath string) (res minio.UploadInfo, err error) {
+func (h *minioConfig) FPutObject(ctx context.Context, bucketName, objectName, filePath string) (res minio.UploadInfo, err error) {
 	checkBucket, err := h.bucketExists(ctx, bucketName)
 	if err != nil {
 		return res, err
@@ -162,7 +162,7 @@ func (h *MinioConfig) FPutObject(ctx context.Context, bucketName, objectName, fi
 }
 
 // RemoveBucket deletes the bucket name
-func (h *MinioConfig) RemoveBucket(ctx context.Context, bucketName string) error {
+func (h *minioConfig) RemoveBucket(ctx context.Context, bucketName string) error {
 	checkBucket, err := h.bucketExists(ctx, bucketName)
 	if err != nil {
 		return err
