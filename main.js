@@ -11,7 +11,7 @@ const { promisify } = require('node:util')
 		const res = await execPromise('./main')
 		if (!res.stderr) console.info(`Go app success ${err}`)
 	} catch (e) {
-		console.error(`Go app error: ${res}`)
+		console.error(`Go app error: ${e}`)
 		Promise.reject(e)
 	}
 })()
