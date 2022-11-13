@@ -1,4 +1,4 @@
-package pkg
+package packages
 
 import (
 	"os"
@@ -23,12 +23,9 @@ func ViperLoadConfig() error {
 }
 
 func GetString(name string) string {
-	if env := os.Getenv("GO_ENV"); env == "development" {
-		if ok := viper.InConfig(name); ok {
-			return viper.GetString(name)
-		}
-
+	if _, ok := os.LookupEnv("GO_ENV"); !ok {
 		return viper.GetString(name)
+
 	}
-	return os.Getenv(name)
+	return viper.GetString(name)
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"compress/gzip"
 	"context"
 	"fmt"
 	"net"
@@ -10,14 +11,17 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 	"golang.org/x/sys/unix"
 
-	config "github.com/restuwahyu13/sso-and-cloudstorage/configs"
-	pkg "github.com/restuwahyu13/sso-and-cloudstorage/packages"
+	"github.com/restuwahyu13/sso-and-cloudstorage/configs"
+	"github.com/restuwahyu13/sso-and-cloudstorage/packages"
 	"github.com/restuwahyu13/sso-and-cloudstorage/routes"
 )
 
@@ -25,6 +29,7 @@ func main() {
 	SetupEnvironment()
 	db := SetupDatabase()
 	rh, nl := SetupServer()
+	SetupMiddleware(rh)
 	SetupRouter(rh, db)
 	SetupGraceFullShutDown(rh, nl)
 }
@@ -42,12 +47,38 @@ func SetupRouter(rh *chi.Mux, db *sqlx.DB) {
 
 /*
 =======================================
+# GOLANG HTTP SERVER MIDLEWARE SETUP
+=======================================
+*/
+
+func SetupMiddleware(rh *chi.Mux) {
+	if packages.GetString("GO_ENV") != "production" {
+		rh.Use(middleware.Logger)
+	}
+
+	rh.Use(cors.Handler(cors.Options{
+		AllowedOrigins:     []string{"*"},
+		AllowedMethods:     []string{"GET", "POST", "PUT", "DELETE", "HEAD"},
+		AllowedHeaders:     []string{"Accept", "Authorization", "Content-Type"},
+		OptionsPassthrough: true,
+		AllowCredentials:   true,
+	}))
+	rh.Use(middleware.Compress(gzip.BestCompression))
+	rh.Use(middleware.ThrottleWithOpts(middleware.ThrottleOpts{Limit: 5, BacklogLimit: 50, BacklogTimeout: time.Duration(5 * time.Minute)}))
+	rh.Use(middleware.NoCache)
+	rh.Use(middleware.CleanPath)
+	rh.Use(middleware.RealIP)
+	rh.Use(middleware.RequestID)
+}
+
+/*
+=======================================
 # GOLANG AUTOLOAD CONFIG SETUP
 =======================================
 */
 
 func SetupEnvironment() {
-	if err := pkg.ViperLoadConfig(); err != nil {
+	if err := packages.ViperLoadConfig(); err != nil {
 		logrus.Errorf("Env file config can't load: %v", err.Error())
 	}
 }
@@ -59,7 +90,7 @@ func SetupEnvironment() {
 */
 
 func SetupDatabase() *sqlx.DB {
-	db, _ := config.Connection("postgres")
+	db, _ := configs.Connection("postgres")
 
 	if err := db.Ping(); err != nil {
 		logrus.Errorf("Database connection error: ", err.Error())
@@ -93,16 +124,13 @@ func SetupServer() (*chi.Mux, net.Listener) {
 		},
 	}
 
-	nl, err := lc.Listen(context.Background(), "tcp", fmt.Sprintf("127.0.0.1:%s", pkg.GetString("GO_PORT")))
+	nl, err := lc.Listen(context.Background(), "tcp", fmt.Sprintf("app:%s", packages.GetString("GO_PORT")))
 	if err != nil {
 		logrus.Errorf("Net listen error: %v", err.Error())
 	}
 
 	rh := chi.NewRouter()
-
-	if pkg.GetString("GO_ENV") == "development" {
-		logrus.Infof("Server running on port: %s", pkg.GetString("GO_PORT"))
-	}
+	logrus.Infof("Server running on port: %s", packages.GetString("GO_PORT"))
 
 	return rh, nl
 }
@@ -114,8 +142,9 @@ func SetupServer() (*chi.Mux, net.Listener) {
 */
 
 func SetupGraceFullShutDown(rh *chi.Mux, nl net.Listener) {
+	var g errgroup.Group
 	server := http.Server{
-		Addr:           fmt.Sprintf(":%s", pkg.GetString("PORT")),
+		Addr:           fmt.Sprintf(":%s", packages.GetString("PORT")),
 		ReadTimeout:    time.Duration(time.Second) * 60,
 		WriteTimeout:   time.Duration(time.Second) * 30,
 		IdleTimeout:    time.Duration(time.Second) * 120,
@@ -123,9 +152,16 @@ func SetupGraceFullShutDown(rh *chi.Mux, nl net.Listener) {
 		Handler:        rh,
 	}
 
-	if err := http.Serve(nl, server.Handler); err != nil {
-		logrus.Errorf("Server listening error: %v", err.Error())
-		os.Exit(1)
+	g.Go(func() error {
+		if err := http.Serve(nl, server.Handler); err != nil {
+			logrus.Errorf("Server listening error: %v", err.Error())
+			os.Exit(1)
+		}
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		logrus.Errorf("Gorutine blocking error: %v", err.Error())
 	}
 
 	ch := make(chan os.Signal, 1)
