@@ -15,7 +15,7 @@ func ViperLoadConfig() error {
 		return err
 	}
 
-	if env := viper.GetString("GO_ENV"); env == "development" {
+	if env := os.Getenv("GO_ENV"); env == "development" {
 		viper.Debug()
 	}
 
@@ -23,8 +23,12 @@ func ViperLoadConfig() error {
 }
 
 func GetString(name string) string {
-	if ok := viper.InConfig(name); ok {
+	if env := os.Getenv("GO_ENV"); env == "development" {
+		if ok := viper.InConfig(name); ok {
+			return viper.GetString(name)
+		}
+
 		return viper.GetString(name)
 	}
-	return ""
+	return os.Getenv(name)
 }

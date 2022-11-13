@@ -43,4 +43,4 @@ RUN npm i pm2 -g --verbose --no-audit
 # DOCKER FINAL STAGE
 ###############################
 EXPOSE 3000
-CMD pm2-runtime pm2.config.js
+CMD ["./main"]

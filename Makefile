@@ -5,6 +5,7 @@ nodemon := @nodemon
 go := go
 docker := @docker
 compose := @docker-compose
+pm2 := @pm2-runtime
 soda := @soda
 db_config_path := ./database.yaml
 db_path := ./databases/migrations
@@ -45,11 +46,18 @@ dc-build:
 #########################
 dev:
 	${nodemon} -V -e go -x ${go} run . --race --signal SIGTERM
+
 #########################
 # GOLANG PROD ENVIRONMENT
 #########################
 prod:
 	./main
+
+#################################
+# GOLANG PROD DOCKER ENVIRONMENT
+#################################
+prod-dc:
+	${pm2} start pm2.config.js
 
 ##########################
 # GOLANG BUILD ENVIRONMENT
