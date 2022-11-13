@@ -4,9 +4,8 @@
 FROM golang:1.19.3-buster
 WORKDIR /usr/src/goapp/
 USER ${USER}
-COPY ./go.mod \
-  ./go.sum /usr/src/goapp/
-COPY . /usr/src/goapp/
+ADD ./go.mod /usr/src/goapp/
+ADD . /usr/src/goapp/
 
 ###############################
 # DOCKER ENVIRONMENT STAGE
@@ -20,7 +19,7 @@ ENV GO111MODULE="on" \
 ###############################
 RUN apt-get autoremove \
   && apt-get autoclean \
-  && apt-get update \
+  && apt-get update --fix-missing \
   && apt-get upgrade -y \
   && apt-get install curl \
   build-essential -y
@@ -34,8 +33,9 @@ RUN apt-get install nodejs
 ###############################
 # DOCKER INSTALL & BUILD STAGE
 ###############################
-RUN go mod tidy \
-  && go mod download \
+RUN go mod download \
+  && go mod tidy \
+  && go mod verify \
   && go build -o main .
 RUN npm i pm2 -g --verbose --no-audit
 

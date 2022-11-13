@@ -1,17 +1,15 @@
 module.exports = {
 	apps: [
 		{
-			name: 'golang-app',
+			name: 'go-app',
+			namespace: 'golang',
 			script: 'main.js',
 			watch: false,
-			// env: {
-			// 	PORT: process.env.PORT,
-			// 	NODE_ENV: process.env.GO_ENV
-			// },
+			autorestart: true,
 			exec_mode: 'cluster',
 			instances: 'max',
 			max_memory_restart: '512M',
-			listen_timeout: 3000,
+			listen_timeout: 4000,
 			kill_timeout: 6000,
 			combine_logs: true
 		}

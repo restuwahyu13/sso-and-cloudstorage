@@ -1,0 +1,17 @@
+development:
+  dialect: postgresql
+  database: postgres
+  host: localhost
+  port: 5432
+  user: restuwahyu13
+  password: restuwahyu13
+  pool: 10
+
+production:
+  dialect: postgresql
+  database: postgres
+  host: localhost
+  port: 5432
+  user: restuwahyu13
+  password: restuwahyu13
+  pool: 20
