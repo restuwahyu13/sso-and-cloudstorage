@@ -36,43 +36,6 @@ func main() {
 
 /*
 =======================================
-# GOLANG HTTP SERVER ROUTING SETUP
-=======================================
-*/
-
-func SetupRouter(rh *chi.Mux, db *sqlx.DB) {
-	routes.NewPingRoute("/", db, rh).PingRoute()
-	routes.NewStudentsRoute("/api/v1/students", db, rh).StudentsRoute()
-}
-
-/*
-=======================================
-# GOLANG HTTP SERVER MIDLEWARE SETUP
-=======================================
-*/
-
-func SetupMiddleware(rh *chi.Mux) {
-	if packages.GetString("GO_ENV") != "production" {
-		rh.Use(middleware.Logger)
-	}
-
-	rh.Use(cors.Handler(cors.Options{
-		AllowedOrigins:     []string{"*"},
-		AllowedMethods:     []string{"GET", "POST", "PUT", "DELETE", "HEAD"},
-		AllowedHeaders:     []string{"Accept", "Authorization", "Content-Type"},
-		OptionsPassthrough: true,
-		AllowCredentials:   true,
-	}))
-	rh.Use(middleware.Compress(gzip.BestCompression))
-	rh.Use(middleware.ThrottleWithOpts(middleware.ThrottleOpts{Limit: 5, BacklogLimit: 50, BacklogTimeout: time.Duration(5 * time.Minute)}))
-	rh.Use(middleware.NoCache)
-	rh.Use(middleware.CleanPath)
-	rh.Use(middleware.RealIP)
-	rh.Use(middleware.RequestID)
-}
-
-/*
-=======================================
 # GOLANG AUTOLOAD CONFIG SETUP
 =======================================
 */
@@ -124,7 +87,7 @@ func SetupServer() (*chi.Mux, net.Listener) {
 		},
 	}
 
-	nl, err := lc.Listen(context.Background(), "tcp", fmt.Sprintf("app:%s", packages.GetString("GO_PORT")))
+	nl, err := lc.Listen(context.Background(), "tcp", fmt.Sprintf("127.0.0.1:%s", packages.GetString("GO_PORT")))
 	if err != nil {
 		logrus.Errorf("Net listen error: %v", err.Error())
 	}
@@ -133,6 +96,42 @@ func SetupServer() (*chi.Mux, net.Listener) {
 	logrus.Infof("Server running on port: %s", packages.GetString("GO_PORT"))
 
 	return rh, nl
+}
+
+/*
+=======================================
+# GOLANG HTTP SERVER MIDLEWARE SETUP
+=======================================
+*/
+
+func SetupMiddleware(rh *chi.Mux) {
+	if packages.GetString("GO_ENV") != "production" {
+		rh.Use(middleware.Logger)
+	}
+
+	rh.Use(cors.Handler(cors.Options{
+		AllowedOrigins:     []string{"*"},
+		AllowedMethods:     []string{"GET", "POST", "PUT", "DELETE", "HEAD"},
+		AllowedHeaders:     []string{"Accept", "Authorization", "Content-Type"},
+		OptionsPassthrough: true,
+		AllowCredentials:   true,
+	}))
+	rh.Use(middleware.Compress(gzip.BestCompression))
+	rh.Use(middleware.ThrottleWithOpts(middleware.ThrottleOpts{Limit: 5, BacklogLimit: 50, BacklogTimeout: time.Duration(5 * time.Minute)}))
+	rh.Use(middleware.NoCache)
+	rh.Use(middleware.RealIP)
+	rh.Use(middleware.RequestID)
+}
+
+/*
+=======================================
+# GOLANG HTTP SERVER ROUTING SETUP
+=======================================
+*/
+
+func SetupRouter(rh *chi.Mux, db *sqlx.DB) {
+	routes.NewPingRoute("/", db, rh).PingRoute()
+	routes.NewStudentsRoute("/api/v1/students", db, rh).StudentsRoute()
 }
 
 /*
@@ -162,6 +161,7 @@ func SetupGraceFullShutDown(rh *chi.Mux, nl net.Listener) {
 
 	if err := g.Wait(); err != nil {
 		logrus.Errorf("Gorutine deathlock error: %v", err.Error())
+		return
 	}
 
 	ch := make(chan os.Signal, 1)
@@ -178,6 +178,7 @@ func SetupGraceFullShutDown(rh *chi.Mux, nl net.Listener) {
 
 	if err := server.Shutdown(ctx); err != nil {
 		logrus.Errorf("HTTP server shutdown error: %s", err.Error())
+		return
 	}
 
 	logrus.Info("HTTP server shutdown success")

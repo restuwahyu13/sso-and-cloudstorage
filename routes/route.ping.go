@@ -20,7 +20,7 @@ func NewPingRoute(prefix string, db *sqlx.DB, router *chi.Mux) *pingRoute {
 
 func (r *pingRoute) PingRoute() {
 	r.router.Route(r.prefix, func(route chi.Router) {
-		route.Get("/", func(rw http.ResponseWriter, r *http.Request) {
+		route.Get(r.prefix, func(rw http.ResponseWriter, r *http.Request) {
 			rw.Header().Set("Content-Type", "application/json")
 
 			res := Response{
