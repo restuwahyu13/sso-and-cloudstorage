@@ -2,7 +2,7 @@
 # GLOBAL VARIABLE
 #########################
 nodemon := @nodemon
-go := @go
+go := go
 docker := @docker
 compose := @docker-compose
 soda := @soda
@@ -44,7 +44,7 @@ dc-build:
 # GOLANG DEV ENVIRONMENT
 #########################
 dev:
-	${nodemon} -V -e go} -x ${go} run . --race --signal SIGTERM
+	${nodemon} -V -e go -x ${go} run . --race --signal SIGTERM
 #########################
 # GOLANG PROD ENVIRONMENT
 #########################
