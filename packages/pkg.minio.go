@@ -67,13 +67,29 @@ func (h *minioConfig) MakeBucket(ctx context.Context, bucketName string) (interf
 	return fmt.Sprintf("Created bucket name %s success", bucketName), nil
 }
 
+// ListObjects returns objects list after evaluating the passed options
+func (h *minioConfig) ListObjects(ctx context.Context, bucketName string) (res <-chan minio.ObjectInfo, err error) {
+	checkBucket, err := h.bucketExists(ctx, bucketName)
+	if err != nil {
+		return res, err
+	}
+
+	if checkBucket {
+		minioRes := h.MinioClient.ListObjects(ctx, bucketName, minio.ListObjectsOptions{WithVersions: true, WithMetadata: true})
+		res = minioRes
+		err = nil
+	}
+
+	return res, nil
+}
+
 // ListBuckets list all buckets owned by this authenticated user
 func (h *minioConfig) ListBucket(ctx context.Context) ([]minio.BucketInfo, error) {
 	res, err := h.MinioClient.ListBuckets(ctx)
 
 	if err != nil {
 		defer logrus.Errorf("ListBucket error: %s", err.Error())
-		return nil, err
+		return res, err
 	}
 
 	return res, nil
@@ -86,9 +102,8 @@ func (h *minioConfig) GetObject(ctx context.Context, bucketName, objectName stri
 		return res, err
 	}
 
-	if !checkBucket {
+	if checkBucket {
 		minioRes, minioErr := h.MinioClient.GetObject(ctx, bucketName, objectName, minio.GetObjectOptions{Checksum: true})
-
 		if minioErr != nil {
 			defer logrus.Errorf("GetObject error: %s", minioErr.Error())
 			return res, minioErr
@@ -108,7 +123,7 @@ func (h *minioConfig) PutObject(ctx context.Context, bucketName, objectName stri
 		return res, err
 	}
 
-	if !checkBucket {
+	if checkBucket {
 		minioRes, minioErr := h.MinioClient.PutObject(ctx, bucketName, objectName, reader, int64(5242880), minio.PutObjectOptions{})
 		if minioErr != nil {
 			defer logrus.Errorf("PutObject error: %s", minioErr.Error())
@@ -129,7 +144,7 @@ func (h *minioConfig) FGetObject(ctx context.Context, bucketName, objectName, fi
 		return err
 	}
 
-	if !checkBucket {
+	if checkBucket {
 		err := h.MinioClient.FGetObject(ctx, bucketName, objectName, filePath, minio.GetObjectOptions{Checksum: true})
 		if err != nil {
 			defer logrus.Errorf("FGetObject error: %s", err.Error())
@@ -147,7 +162,7 @@ func (h *minioConfig) FPutObject(ctx context.Context, bucketName, objectName, fi
 		return res, err
 	}
 
-	if !checkBucket {
+	if checkBucket {
 		minioRes, minioErr := h.MinioClient.FPutObject(ctx, bucketName, objectName, filePath, minio.PutObjectOptions{})
 		if minioErr != nil {
 			defer logrus.Errorf("FPutObject error: %s", minioErr.Error())
@@ -168,10 +183,28 @@ func (h *minioConfig) RemoveBucket(ctx context.Context, bucketName string) error
 		return err
 	}
 
-	if !checkBucket {
+	if checkBucket {
 		err := h.MinioClient.RemoveBucket(ctx, bucketName)
 		if err != nil {
 			defer logrus.Errorf("RemoveBucket error: %s", err.Error())
+			return err
+		}
+	}
+
+	return nil
+}
+
+// RemoveObject removes an object from a bucket
+func (h *minioConfig) RemoveObject(ctx context.Context, bucketName, objectName string) error {
+	checkBucket, err := h.bucketExists(ctx, bucketName)
+	if err != nil {
+		return err
+	}
+
+	if checkBucket {
+		err := h.MinioClient.RemoveObject(ctx, bucketName, objectName, minio.RemoveObjectOptions{ForceDelete: true})
+		if err != nil {
+			defer logrus.Errorf("RemoveObject error: %s", err.Error())
 			return err
 		}
 	}
